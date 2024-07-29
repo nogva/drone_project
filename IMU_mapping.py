@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import re
+import os
 
 #TODO Finne ut hva vi må gjøre med tyngdekraften
 #TODO Sjekke om disse stemmer eller ikke.. 
@@ -20,10 +21,15 @@ def parse_imu_data(imu_data):
 df = pd.read_csv('telemetry_data.csv', converters={'IMU1Data': parse_imu_data, 'IMU2Data': parse_imu_data})
 df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='s')
 
-dt = 0.01  # 10 ms mellom hver IMU oppdatering
+dt = 0.1  # 10 ms mellom hver IMU oppdatering
 
-def compute_velocity_position(acc_data, dt):
-    acc_data[:, 2] -= 0.981 # TODO Hva skal denne være? 
+def compute_velocity_position(acc_data, dt, acc_offset):
+    """ acc_data[:, 0] -= acc_offset[0] # TODO Hva skal denne være? 
+    acc_data[:, 1] -= acc_offset[1] # TODO Hva skal denne være? 
+    acc_data[:, 2] -= acc_offset[2] # TODO Hva skal denne være?  """
+    acc_data[:, 0] -= 0 # TODO Hva skal denne være? 
+    acc_data[:, 1] -= 0 # TODO Hva skal denne være? 
+    acc_data[:, 2] -= 0# TODO Hva skal denne være? 
     velocity = np.cumsum(acc_data * dt, axis=0)
     position = np.cumsum(velocity * dt, axis=0)
     return velocity, position
@@ -31,13 +37,36 @@ def compute_velocity_position(acc_data, dt):
 def prepare_data(imu_data):
     return np.array([list(x['accelerometer'].values()) for x in imu_data if 'accelerometer' in x])
 
+calibration_file_path = r"C:\Users\sindr\Documents\TotalEnergies\drone_project\calibration_data.csv"
+
+def calibrate_acc(calibration_file_path):
+    x_offset = 0
+    y_offset = 0
+    z_offset = 0
+    
+    df = pd.read_csv('calibration_data.csv', converters={'IMU1Data': parse_imu_data, 'IMU2Data': parse_imu_data})
+    df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='s')
+    
+    acc_data1 = prepare_data(df['IMU1Data'])
+    acc_data2 = prepare_data(df['IMU2Data'])
+    
+    acc_offset1 = np.mean(acc_data1, axis=0)
+    acc_offset2 = np.mean(acc_data2, axis=0)
+    
+    print(acc_offset1)
+    print(acc_offset2)
+    
+    return acc_offset1, acc_offset2
+
+acc_offset1, acc_offset2 = calibrate_acc(calibration_file_path)
+
 # Forbered data
 acc_data1 = prepare_data(df['IMU1Data'])
 acc_data2 = prepare_data(df['IMU2Data'])
 
 # Beregn hastighet og posisjon
-velocity1, position1 = compute_velocity_position(acc_data1, dt)
-velocity2, position2 = compute_velocity_position(acc_data2, dt)
+velocity1, position1 = compute_velocity_position(acc_data1, dt, acc_offset1)
+velocity2, position2 = compute_velocity_position(acc_data2, dt, acc_offset2)
 
 # Trim timestamps for å matche lengden på acc_data, velocity og position
 timestamps = df['Timestamp'].values[:len(acc_data1)]

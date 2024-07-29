@@ -57,6 +57,9 @@ def common_callback(msg_type: str, msg):
         # Reset data to avoid duplicate writes
         telemetry_data = {key: None for key in telemetry_data}
 
+def live_mapping():
+    
+
 if __name__ == "__main__":
     # Set up the CSV file
     csv_file, csv_writer = setup_csv()
@@ -74,10 +77,10 @@ if __name__ == "__main__":
     print("Callbacks added")
 
     # Adjust the publishing frequency for the messages
-    my_drone.telemetry.set_msg_publish_frequency(bp.DepthTel, 5)
-    my_drone.telemetry.set_msg_publish_frequency(bp.Imu1Tel, 2)
-    my_drone.telemetry.set_msg_publish_frequency(bp.Imu2Tel, 2)
-    my_drone.telemetry.set_msg_publish_frequency(bp.PilotGPSPositionTel, 1)
+    my_drone.telemetry.set_msg_publish_frequency(bp.DepthTel, 10)
+    my_drone.telemetry.set_msg_publish_frequency(bp.Imu1Tel, 10)
+    my_drone.telemetry.set_msg_publish_frequency(bp.Imu2Tel, 10)
+    my_drone.telemetry.set_msg_publish_frequency(bp.PilotGPSPositionTel, 10)
     print("Publishing frequency set")
 
     # Callback is triggered by a separate thread while we sleep here
